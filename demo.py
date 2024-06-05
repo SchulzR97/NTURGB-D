@@ -2,21 +2,32 @@ from args import get_args
 import data
 from torch.utils.data import DataLoader
 from datetime import datetime
+import visualization as vis
+
+DATASET_SKELETONS = 'skeletons'
+DATASET_DEPTH_MASKED = 'depth_masked'
 
 if __name__ == '__main__':
     args = get_args()
 
-    if args.dataset == 'd_skeletons':
+    if args.dataset == DATASET_SKELETONS:
         if args.split == 'full':
-            ds_train, ds_val = data.get_datasets_d_skeletons_full(args.in_dir, data_cnt = None)
+            ds_train, ds_val = data.get_datasets_skeletons_full(args.in_dir, data_cnt = None)
         elif args.split == 'CV':
-            ds_train, ds_val = data.get_datasets_d_skeletons_CV(args.in_dir)
+            ds_train, ds_val = data.get_datasets_skeletons_CV(args.in_dir)
         elif args.split == 'CS':
-            ds_train, ds_val = data.get_datasets_d_skeletons_CS(args.in_dir)
+            ds_train, ds_val = data.get_datasets_skeletons_CS(args.in_dir)
         else:
             raise Exception(f'Split {args.split} is not supported. Please privide one of the following values: [full, CV, CS]. See the documentation for more information.')
-    elif args.dataset == 'd_depth_masked':
-        pass
+    elif args.dataset == DATASET_DEPTH_MASKED:
+        if args.split == 'full':
+            ds_train, ds_val = data.get_datasets_depth_masked_full(args.in_dir, data_cnt = None)
+        elif args.split == 'CV':
+            ds_train, ds_val = data.get_datasets_depth_masked_CV(args.in_dir)
+        elif args.split == 'CS':
+            ds_train, ds_val = data.get_datasets_depth_masked_CS(args.in_dir)
+        else:
+            raise Exception(f'Split {args.split} is not supported. Please privide one of the following values: [full, CV, CS]. See the documentation for more information.')
     
     test = len(ds_train)
     dl_train = DataLoader(dataset = ds_train,
@@ -30,4 +41,6 @@ if __name__ == '__main__':
     
     start_time = datetime.now()
     for i, (X, T) in enumerate(dl_train):
+        if args.dataset == DATASET_SKELETONS:
+            vis.show_skeleton_sequences(X, T)
         print(f'sample {i} time per sample: {(datetime.now() - start_time) / (i + 1)}')

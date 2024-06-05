@@ -5,7 +5,7 @@
     "version": "0.2.0",
     "configurations": [
         {
-            "name": "3d_skeletons full",
+            "name": "skeletons full",
             "type": "debugpy",
             "request": "launch",
             "program": "demo.py",
@@ -13,12 +13,12 @@
             "args": [
                 "--in_dir", "/Users/schulzr/Downloads/nturgb+d_skeletons",
                 "--split", "full",
-                "--dataset", "3d_skeletons",
+                "--dataset", "skeletons",
                 "--num_workers", "0"
             ]
         },
         {
-            "name": "3d_skeletons CV",
+            "name": "skeletons CV",
             "type": "debugpy",
             "request": "launch",
             "program": "demo.py",
@@ -26,12 +26,12 @@
             "args": [
                 "--in_dir", "/Users/schulzr/Downloads/nturgb+d_skeletons",
                 "--split", "CV",
-                "--dataset", "3d_skeletons",
+                "--dataset", "skeletons",
                 "--num_workers", "0"
             ]
         },
         {
-            "name": "3d_skeletons CS",
+            "name": "skeletons CS",
             "type": "debugpy",
             "request": "launch",
             "program": "demo.py",
@@ -39,7 +39,46 @@
             "args": [
                 "--in_dir", "/Users/schulzr/Downloads/nturgb+d_skeletons",
                 "--split", "CS",
-                "--dataset", "3d_skeletons",
+                "--dataset", "skeletons",
+                "--num_workers", "0"
+            ]
+        },
+        {
+            "name": "depth masked full",
+            "type": "debugpy",
+            "request": "launch",
+            "program": "demo.py",
+            "console": "integratedTerminal",
+            "args": [
+                "--in_dir", "/Users/schulzr/Downloads/nturgb+d_depth_masked",
+                "--split", "full",
+                "--dataset", "depth_masked",
+                "--num_workers", "0"
+            ]
+        },
+        {
+            "name": "depth masked CV",
+            "type": "debugpy",
+            "request": "launch",
+            "program": "demo.py",
+            "console": "integratedTerminal",
+            "args": [
+                "--in_dir", "/Users/schulzr/Downloads/nturgb+d_depth_masked",
+                "--split", "CV",
+                "--dataset", "depth_masked",
+                "--num_workers", "0"
+            ]
+        },
+        {
+            "name": "depth masked CS",
+            "type": "debugpy",
+            "request": "launch",
+            "program": "demo.py",
+            "console": "integratedTerminal",
+            "args": [
+                "--in_dir", "/Users/schulzr/Downloads/nturgb+d_depth_masked",
+                "--split", "CS",
+                "--dataset", "depth_masked",
                 "--num_workers", "0"
             ]
         }

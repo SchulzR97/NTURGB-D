@@ -4,6 +4,7 @@ from torch.utils.data import Dataset, DataLoader
 import os
 from numpy.random import default_rng
 from tqdm import tqdm
+import cv2 as cv
 
 CS_SUBJECT_IDS_TRAIN = [1,  2,  4,  5,  8,  9,  13, 14, 15, 16, 17, 18, 19, 25, 27, 28, 31, 34, 35, 38]
 CS_SUBJECT_IDS_VAL = [3,  6,  7,  10, 11, 12, 20, 21, 22, 23, 24, 26, 29, 30, 32, 33, 36, 37, 39, 40]
@@ -11,6 +12,7 @@ CS_SUBJECT_IDS_VAL = [3,  6,  7,  10, 11, 12, 20, 21, 22, 23, 24, 26, 29, 30, 32
 CV_CAMERA_IDS_TRAIN = [2, 3]
 CV_CAMERA_IDS_VAL = [1]
 
+#region "NTU RGB+D" - 3D Skeletons
 def __get_skeleton_files__(in_dir:str, data_cnt:int = None):
     files = []
 
@@ -32,7 +34,7 @@ def __get_skeleton_files__(in_dir:str, data_cnt:int = None):
 
     return files
 
-def get_datasets_d_skeletons_full(in_dir:str, split_prop = 0.7, data_cnt:int = None, shuffle = False):
+def get_datasets_skeletons_full(in_dir:str, split_prop = 0.7, data_cnt:int = None, shuffle = False):
     files = __get_skeleton_files__(in_dir, data_cnt)
 
     if shuffle:
@@ -47,12 +49,12 @@ def get_datasets_d_skeletons_full(in_dir:str, split_prop = 0.7, data_cnt:int = N
 
     files = np.asarray(files)
 
-    ds_train = NTURGBD_Skeletons_DS(in_dir, files[idx_train])
-    ds_val = NTURGBD_Skeletons_DS(in_dir, files[idx_val])
+    ds_train = skeletons_dataset(in_dir, files[idx_train])
+    ds_val = skeletons_dataset(in_dir, files[idx_val])
 
     return ds_train, ds_val
 
-def get_datasets_d_skeletons_CV(in_dir:str):
+def get_datasets_skeletons_CV(in_dir:str):
     files = __get_skeleton_files__(in_dir, None)
 
     files_train = []
@@ -68,12 +70,12 @@ def get_datasets_d_skeletons_CV(in_dir:str):
         else:
             raise Exception(f'Camera ID {camera} not defined for split CV.')
 
-    ds_train = NTURGBD_Skeletons_DS(in_dir, files_train)
-    ds_val = NTURGBD_Skeletons_DS(in_dir, files_val)
+    ds_train = skeletons_dataset(in_dir, files_train)
+    ds_val = skeletons_dataset(in_dir, files_val)
     
     return ds_train, ds_val
 
-def get_datasets_d_skeletons_CS(in_dir:str):
+def get_datasets_skeletons_CS(in_dir:str):
     files = __get_skeleton_files__(in_dir, None)
 
     files_train = []
@@ -89,12 +91,54 @@ def get_datasets_d_skeletons_CS(in_dir:str):
         else:
             raise Exception(f'Subject ID {subject} not defined for split CV.')
 
-    ds_train = NTURGBD_Skeletons_DS(in_dir, files_train)
-    ds_val = NTURGBD_Skeletons_DS(in_dir, files_val)
+    ds_train = skeletons_dataset(in_dir, files_train)
+    ds_val = skeletons_dataset(in_dir, files_val)
     
     return ds_train, ds_val
+#endregion
 
-class NTURGBD_Base_DS(Dataset):
+#region "NTU RGB+D" - Masked Depth Maps
+def __get_depth_masked_files__(in_dir:str, data_cnt:int = None):
+    files = []
+    for dir in tqdm(sorted(os.listdir(in_dir)), desc='Loading files'):
+        if dir.startswith('.'):
+            continue
+        for entry in sorted(os.listdir(f'{in_dir}/{dir}')):
+            if not entry.endswith('.png'):
+                continue
+            files.append(f'{in_dir}/{dir}/{entry}')
+        pass
+    return files
+
+def get_datasets_depth_masked_full(in_dir:str, split_prop = 0.7, data_cnt:int = None, shuffle = False):
+    files = __get_depth_masked_files__(in_dir, data_cnt)
+
+    if shuffle:
+        rng = default_rng()
+        indices = rng.choice(len(files), size=len(files), replace=False)
+    else:
+        indices = np.arange(len(files), dtype=np.int32)
+
+    train_cnt = int(split_prop * len(files))  
+    idx_train = indices[:train_cnt]
+    idx_val = indices[train_cnt:]
+
+    files = np.asarray(files)
+
+    ds_train = depth_masked_dataset(in_dir, files[idx_train])
+    ds_val = depth_masked_dataset(in_dir, files[idx_val])
+
+    return ds_train, ds_val
+
+def get_datasets_depth_masked_CV(in_dir:str):
+    pass
+
+def get_datasets_depth_masked_CS(in_dir:str):
+    pass
+#endregion
+
+#region Datasets
+class base_dataset(Dataset):
     def __init__(self, in_dir:str, files:list = None, num_classes:int = 64, sequence_length:int = 64):
         super().__init__()
 
@@ -104,17 +148,14 @@ class NTURGBD_Base_DS(Dataset):
         self.__sequence_length__ = sequence_length
 
     def __len__(self):
-        raise NotImplementedError()
+        return len(self.__files__)
     
     def __getitem__(self, index):
         raise NotImplementedError()
 
-class NTURGBD_Skeletons_DS(NTURGBD_Base_DS):
+class skeletons_dataset(base_dataset):
     def __init__(self, in_dir:str, files:list, num_classes:int = 64, sequence_length:int = 64):
         super().__init__(in_dir, files, num_classes, sequence_length)
-
-    def __len__(self):
-        return len(self.__files__)
     
     def __getitem__(self, index):
         skeleton_file = self.__files__[index]
@@ -150,16 +191,17 @@ class NTURGBD_Skeletons_DS(NTURGBD_Base_DS):
         skeleton_seq = torch.zeros((num_frames, 75, 3))
         for i in range(num_frames):
             if next_idx >= len(lines):
-                i = i if i > self.__sequence_length__ else self.__sequence_length__
-                skeleton_seq = skeleton_seq[:i]
+                #i = i if i > self.__sequence_length__ else self.__sequence_length__
+                #skeleton_seq = skeleton_seq[:i]
                 return skeleton_seq
             next_idx, joints = self.__get_skeleton_joints__(lines, next_idx)
 
             if joints is None:
                 # drop frames if no skeleton was detected within last frames
-                i = i if i > self.__sequence_length__ else self.__sequence_length__
-                skeleton_seq = skeleton_seq[:i]
-                break
+                #i = i if i > self.__sequence_length__ else self.__sequence_length__
+                #skeleton_seq = skeleton_seq[:i]
+                #return skeleton_seq
+                continue
             else:
                 skeleton_seq[i] = joints
             pass
@@ -193,9 +235,21 @@ class NTURGBD_Skeletons_DS(NTURGBD_Base_DS):
             joints[s*25:s*25+25] = subject_joints
         return i, torch.tensor(joints)
 
-class NTURGBD_DepthMasked_DS(NTURGBD_Base_DS):
+class depth_masked_dataset(base_dataset):
     def __init__(self, in_dir, files:list, num_classes:int = 64, sequence_length:int = 64):
         super().__init__(in_dir, files, num_classes, sequence_length)
 
-        for file in sorted(files):
-            pass
+    def __getitem__(self, index):
+        file = self.__files__[index]
+
+        sequence_name = file.split('/')[-2]
+        action = int(sequence_name[-3:])-1
+
+        img = cv.imread(file)
+
+        X = torch.tensor(img)
+        T = torch.zeros((self.__num_classes__))
+        T[action] = 1
+
+        return X, T
+#endregion

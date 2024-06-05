@@ -10,7 +10,7 @@ Data should be organized in a certain structure within a directory passed as `--
 
 https://rose1.ntu.edu.sg/dataset/actionRecognition/download/157
 
-> argument `--dataset` `d_skeletons`
+> argument `--dataset` `skeletons`
 
 ### 1.2 "NTU RGB+D" - Masked Depth Maps
 
@@ -32,4 +32,8 @@ https://rose1.ntu.edu.sg/dataset/actionRecognition/download/76<br>
 https://rose1.ntu.edu.sg/dataset/actionRecognition/download/78<br>
 https://rose1.ntu.edu.sg/dataset/actionRecognition/download/80<br>
 
-> argument `--dataset` `d_depth_masked`
+> argument `--dataset` `depth_masked`
+
+### 1.3 "NTU RGB+D" - RGB Videos
+
+> argument `--dataset` `rgb`
