@@ -3,6 +3,7 @@ import data
 from torch.utils.data import DataLoader
 from datetime import datetime
 import visualization as vis
+import cv2 as cv
 
 DATASET_SKELETONS = 'skeletons'
 DATASET_DEPTH_MASKED = 'depth_masked'
@@ -41,6 +42,11 @@ if __name__ == '__main__':
     
     start_time = datetime.now()
     for i, (X, T) in enumerate(dl_train):
-        if args.dataset == DATASET_SKELETONS:
-            vis.show_skeleton_sequences(X, T)
-        print(f'sample {i} time per sample: {(datetime.now() - start_time) / (i + 1)}')
+        if args.visualize:
+            if args.dataset == DATASET_SKELETONS:
+                vis.show_skeleton_sequences(X, T)
+            elif args.dataset == DATASET_DEPTH_MASKED:
+                vis.show_image_sequences(X, T, colormap=cv.COLORMAP_HOT)
+            print(f'sample {i}')
+        else:
+            print(f'sample {i} time per sample: {(datetime.now() - start_time) / (i + 1)}')

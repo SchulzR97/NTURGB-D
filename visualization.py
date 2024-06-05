@@ -68,22 +68,36 @@ def __draw_skeleton__(img, subject):
     return img
 #endregion
 
+#region show sequences
 def show_skeleton_sequences(X:torch.Tensor, T:torch.Tensor):
     # X.shape: (N, num_frames, num_joints, xyz) => (batch_size, default=64, 75, 3)
     # T.shape: (N, num_frames, num_classes) => (batch_size, default=64, default=64)
 
     for x, t in zip(X, T):
         for frame_x, frame_t in zip(x, t):
-            img = np.ones((300, 300, 3))
+            img = np.ones((400, 400, 3))
             subjects = [frame_x[0:25], frame_x[25:50], frame_x[50:75]]
 
             for subject in subjects:
                 img = __draw_skeleton__(img, subject)
-            # for i, joint in enumerate(subject1):
-            #     x = joint[0].item()
-            #     y = joint[1].item()
-            #     z = joint[2].item()
-            #     pass
 
             cv.imshow('skeleton', img)
             cv.waitKey(30)
+
+def show_image_sequences(X:torch.Tensor, T:torch.Tensor, colormap = None):
+    for x, t in zip(X, T):
+        for frame_x, frame_t in zip(x, t):
+            img = frame_x.permute(1, 2, 0).numpy()
+
+            min, max = img.min(), img.max()
+            if min != 0 or max != 0:
+                pass
+            if max > 1:
+                pass
+
+            if colormap is not None:
+                img = cv.applyColorMap(np.uint8(img[:, :, 0] * 255), colormap)
+
+            cv.imshow('image', img)
+            cv.waitKey(30)
+#endregion

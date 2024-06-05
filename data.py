@@ -5,6 +5,7 @@ import os
 from numpy.random import default_rng
 from tqdm import tqdm
 import cv2 as cv
+from unicodedata import normalize
 
 CS_SUBJECT_IDS_TRAIN = [1,  2,  4,  5,  8,  9,  13, 14, 15, 16, 17, 18, 19, 25, 27, 28, 31, 34, 35, 38]
 CS_SUBJECT_IDS_VAL = [3,  6,  7,  10, 11, 12, 20, 21, 22, 23, 24, 26, 29, 30, 32, 33, 36, 37, 39, 40]
@@ -98,35 +99,32 @@ def get_datasets_skeletons_CS(in_dir:str):
 #endregion
 
 #region "NTU RGB+D" - Masked Depth Maps
-def __get_depth_masked_files__(in_dir:str, data_cnt:int = None):
-    files = []
+def __get_depth_masked_sequences__(in_dir:str, data_cnt:int = None):
+    sequences = []
     for dir in tqdm(sorted(os.listdir(in_dir)), desc='Loading files'):
         if dir.startswith('.'):
             continue
-        for entry in sorted(os.listdir(f'{in_dir}/{dir}')):
-            if not entry.endswith('.png'):
-                continue
-            files.append(f'{in_dir}/{dir}/{entry}')
+        sequences.append(f'{in_dir}/{dir}')
         pass
-    return files
+    return sequences
 
 def get_datasets_depth_masked_full(in_dir:str, split_prop = 0.7, data_cnt:int = None, shuffle = False):
-    files = __get_depth_masked_files__(in_dir, data_cnt)
+    sequence_dirs = __get_depth_masked_sequences__(in_dir, data_cnt)
 
     if shuffle:
         rng = default_rng()
-        indices = rng.choice(len(files), size=len(files), replace=False)
+        indices = rng.choice(len(sequence_dirs), size=len(sequence_dirs), replace=False)
     else:
-        indices = np.arange(len(files), dtype=np.int32)
+        indices = np.arange(len(sequence_dirs), dtype=np.int32)
 
-    train_cnt = int(split_prop * len(files))  
+    train_cnt = int(split_prop * len(sequence_dirs))  
     idx_train = indices[:train_cnt]
     idx_val = indices[train_cnt:]
 
-    files = np.asarray(files)
+    sequence_dirs = np.asarray(sequence_dirs)
 
-    ds_train = depth_masked_dataset(in_dir, files[idx_train])
-    ds_val = depth_masked_dataset(in_dir, files[idx_val])
+    ds_train = depth_masked_dataset(in_dir, sequence_dirs[idx_train])
+    ds_val = depth_masked_dataset(in_dir, sequence_dirs[idx_val])
 
     return ds_train, ds_val
 
@@ -240,14 +238,33 @@ class depth_masked_dataset(base_dataset):
         super().__init__(in_dir, files, num_classes, sequence_length)
 
     def __getitem__(self, index):
-        file = self.__files__[index]
+        sequence_dir = self.__files__[index]
 
-        sequence_name = file.split('/')[-2]
+        sequence_name = sequence_dir.split('/')[-1]
         action = int(sequence_name[-3:])-1
 
-        img = cv.imread(file)
+        files = os.listdir(sequence_dir)
+        img_sequence = []
+        for entry in sorted(files):
+            file = str(entry).replace('b\'', '').replace('\'', '')
+            img = cv.imread(f'{sequence_dir}/{file}') / 19
+            #img[img == 0] = 1
+            #img = 1 - img
+            img_sequence.append(img)
 
-        X = torch.tensor(img)
+        img_sequence = np.array(img_sequence)
+
+        X = torch.zeros((self.__sequence_length__, img.shape[0], img.shape[1], img.shape[2]))
+
+        if img_sequence.shape[0] <= self.__sequence_length__:
+            X[0:len(img_sequence)] = torch.tensor(img_sequence, dtype=torch.float32)
+        else:
+            start_idx = np.random.randint(0, img_sequence.shape[0]-self.__sequence_length__)
+            end_idx = start_idx + self.__sequence_length__
+            img_sequence = img_sequence[start_idx:end_idx]
+            X = torch.tensor(img_sequence, dtype=torch.float32)
+
+        X = X.permute(0, 3, 1, 2)
         T = torch.zeros((self.__num_classes__))
         T[action] = 1
 
