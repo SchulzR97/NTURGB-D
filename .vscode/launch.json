@@ -8,11 +8,37 @@
             "name": "3d_skeletons full",
             "type": "debugpy",
             "request": "launch",
-            "program": "main.py",
+            "program": "demo.py",
             "console": "integratedTerminal",
             "args": [
-                "--in_dir", "/Volumes/EXTERN 500G/Studium/Neurorobotik/Forschungspraktikum/NTU RGB+D Skeletons/nturgb+d_skeletons_original",
+                "--in_dir", "/Users/schulzr/Downloads/nturgb+d_skeletons",
                 "--split", "full",
+                "--dataset", "3d_skeletons",
+                "--num_workers", "0"
+            ]
+        },
+        {
+            "name": "3d_skeletons CV",
+            "type": "debugpy",
+            "request": "launch",
+            "program": "demo.py",
+            "console": "integratedTerminal",
+            "args": [
+                "--in_dir", "/Users/schulzr/Downloads/nturgb+d_skeletons",
+                "--split", "CV",
+                "--dataset", "3d_skeletons",
+                "--num_workers", "0"
+            ]
+        },
+        {
+            "name": "3d_skeletons CS",
+            "type": "debugpy",
+            "request": "launch",
+            "program": "demo.py",
+            "console": "integratedTerminal",
+            "args": [
+                "--in_dir", "/Users/schulzr/Downloads/nturgb+d_skeletons",
+                "--split", "CS",
                 "--dataset", "3d_skeletons",
                 "--num_workers", "0"
             ]

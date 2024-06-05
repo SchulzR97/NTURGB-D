@@ -9,9 +9,9 @@ CS_SUBJECT_IDS_TRAIN = [1,  2,  4,  5,  8,  9,  13, 14, 15, 16, 17, 18, 19, 25, 
 CS_SUBJECT_IDS_VAL = [3,  6,  7,  10, 11, 12, 20, 21, 22, 23, 24, 26, 29, 30, 32, 33, 36, 37, 39, 40]
 
 CV_CAMERA_IDS_TRAIN = [2, 3]
-CV_CAMERA_IDS_VAL = 1
+CV_CAMERA_IDS_VAL = [1]
 
-def get_datasets_3d_skeletons_full(in_dir:str, split_prop = 0.7, data_cnt = None, shuffle = False):
+def __get_skeleton_files__(in_dir:str, data_cnt:int = None):
     files = []
 
     in_files = sorted(os.listdir(in_dir))
@@ -26,11 +26,14 @@ def get_datasets_3d_skeletons_full(in_dir:str, split_prop = 0.7, data_cnt = None
         if entry.startswith('.'):
             continue
 
-        # extract subject and camera from filename
-        # subject, camera = int(entry[1:4]), int(entry[5:8])
         files.append(entry)
         progress.update(len(files))
     progress.close()
+
+    return files
+
+def get_datasets_3d_skeletons_full(in_dir:str, split_prop = 0.7, data_cnt:int = None, shuffle = False):
+    files = __get_skeleton_files__(in_dir, data_cnt)
 
     if shuffle:
         rng = default_rng()
@@ -49,11 +52,47 @@ def get_datasets_3d_skeletons_full(in_dir:str, split_prop = 0.7, data_cnt = None
 
     return ds_train, ds_val
 
-def get_datasets_3d_skeletons_CV():
-    pass
+def get_datasets_3d_skeletons_CV(in_dir:str):
+    files = __get_skeleton_files__(in_dir, None)
 
-def get_datasets_3d_skeletons_CS():
-    pass
+    files_train = []
+    files_val = []
+
+    for file in tqdm(files, desc='Creating CV split'):
+        camera = int(file[5:8])
+        
+        if camera in CV_CAMERA_IDS_TRAIN:
+            files_train.append(file)
+        elif camera in CV_CAMERA_IDS_VAL:
+            files_val.append(file)
+        else:
+            raise Exception(f'Camera ID {camera} not defined for split CV.')
+
+    ds_train = NTURGBD_Skeletons_DS(in_dir, files_train)
+    ds_val = NTURGBD_Skeletons_DS(in_dir, files_val)
+    
+    return ds_train, ds_val
+
+def get_datasets_3d_skeletons_CS(in_dir:str):
+    files = __get_skeleton_files__(in_dir, None)
+
+    files_train = []
+    files_val = []
+
+    for file in tqdm(files, desc='Creating CV split'):
+        subject = int(file[1:4])
+        
+        if subject in CS_SUBJECT_IDS_TRAIN:
+            files_train.append(file)
+        elif subject in CS_SUBJECT_IDS_VAL:
+            files_val.append(file)
+        else:
+            raise Exception(f'Subject ID {subject} not defined for split CV.')
+
+    ds_train = NTURGBD_Skeletons_DS(in_dir, files_train)
+    ds_val = NTURGBD_Skeletons_DS(in_dir, files_val)
+    
+    return ds_train, ds_val
 
 class NTURGBD_Base_DS(Dataset):
     def __init__(self, in_dir:str, files:list = None, num_classes:int = 64, sequence_length:int = 64):

@@ -14,7 +14,7 @@ if __name__ == '__main__':
         elif args.split == 'CS':
             ds_train, ds_val = data.get_datasets_3d_skeletons_CS(args.in_dir)
         else:
-            raise Exception(f'split {args.split} is not supported. Please privide one of the following values: [full, CV, CS]. See the documentation for more information.')
+            raise Exception(f'Split {args.split} is not supported. Please privide one of the following values: [full, CV, CS]. See the documentation for more information.')
     
     test = len(ds_train)
     dl_train = DataLoader(dataset = ds_train,
