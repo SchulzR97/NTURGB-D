@@ -1,4 +1,4 @@
-from args import get_args
+from args import get_args_demo
 import data
 from torch.utils.data import DataLoader
 from datetime import datetime
@@ -9,7 +9,7 @@ DATASET_SKELETONS = 'skeletons'
 DATASET_DEPTH_MASKED = 'depth_masked'
 
 if __name__ == '__main__':
-    args = get_args()
+    args = get_args_demo()
 
     if args.dataset == DATASET_SKELETONS:
         if args.split == 'full':

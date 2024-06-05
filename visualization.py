@@ -87,7 +87,7 @@ def show_skeleton_sequences(X:torch.Tensor, T:torch.Tensor):
 def show_image_sequences(X:torch.Tensor, T:torch.Tensor, colormap = None):
     for x, t in zip(X, T):
         for frame_x, frame_t in zip(x, t):
-            img = frame_x.permute(1, 2, 0).numpy()
+            img = frame_x.numpy()
 
             min, max = img.min(), img.max()
             if min != 0 or max != 0:
@@ -96,7 +96,7 @@ def show_image_sequences(X:torch.Tensor, T:torch.Tensor, colormap = None):
                 pass
 
             if colormap is not None:
-                img = cv.applyColorMap(np.uint8(img[:, :, 0] * 255), colormap)
+                img = cv.applyColorMap(np.uint8(img * 255), colormap)
 
             cv.imshow('image', img)
             cv.waitKey(30)

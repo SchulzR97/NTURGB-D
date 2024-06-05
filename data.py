@@ -5,7 +5,6 @@ import os
 from numpy.random import default_rng
 from tqdm import tqdm
 import cv2 as cv
-from unicodedata import normalize
 
 CS_SUBJECT_IDS_TRAIN = [1,  2,  4,  5,  8,  9,  13, 14, 15, 16, 17, 18, 19, 25, 27, 28, 31, 34, 35, 38]
 CS_SUBJECT_IDS_VAL = [3,  6,  7,  10, 11, 12, 20, 21, 22, 23, 24, 26, 29, 30, 32, 33, 36, 37, 39, 40]
@@ -247,14 +246,14 @@ class depth_masked_dataset(base_dataset):
         img_sequence = []
         for entry in sorted(files):
             file = str(entry).replace('b\'', '').replace('\'', '')
-            img = cv.imread(f'{sequence_dir}/{file}') / 19
+            img = cv.imread(f'{sequence_dir}/{file}')[:, :, 0] / 19
             #img[img == 0] = 1
             #img = 1 - img
             img_sequence.append(img)
 
         img_sequence = np.array(img_sequence)
 
-        X = torch.zeros((self.__sequence_length__, img.shape[0], img.shape[1], img.shape[2]))
+        X = torch.zeros((self.__sequence_length__, img.shape[0], img.shape[1]))
 
         if img_sequence.shape[0] <= self.__sequence_length__:
             X[0:len(img_sequence)] = torch.tensor(img_sequence, dtype=torch.float32)
@@ -264,7 +263,7 @@ class depth_masked_dataset(base_dataset):
             img_sequence = img_sequence[start_idx:end_idx]
             X = torch.tensor(img_sequence, dtype=torch.float32)
 
-        X = X.permute(0, 3, 1, 2)
+        #X = X.permute(0, 3, 1, 2)
         T = torch.zeros((self.__num_classes__))
         T[action] = 1
 
