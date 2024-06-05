@@ -32,7 +32,7 @@ def __get_skeleton_files__(in_dir:str, data_cnt:int = None):
 
     return files
 
-def get_datasets_3d_skeletons_full(in_dir:str, split_prop = 0.7, data_cnt:int = None, shuffle = False):
+def get_datasets_d_skeletons_full(in_dir:str, split_prop = 0.7, data_cnt:int = None, shuffle = False):
     files = __get_skeleton_files__(in_dir, data_cnt)
 
     if shuffle:
@@ -52,7 +52,7 @@ def get_datasets_3d_skeletons_full(in_dir:str, split_prop = 0.7, data_cnt:int = 
 
     return ds_train, ds_val
 
-def get_datasets_3d_skeletons_CV(in_dir:str):
+def get_datasets_d_skeletons_CV(in_dir:str):
     files = __get_skeleton_files__(in_dir, None)
 
     files_train = []
@@ -73,7 +73,7 @@ def get_datasets_3d_skeletons_CV(in_dir:str):
     
     return ds_train, ds_val
 
-def get_datasets_3d_skeletons_CS(in_dir:str):
+def get_datasets_d_skeletons_CS(in_dir:str):
     files = __get_skeleton_files__(in_dir, None)
 
     files_train = []
