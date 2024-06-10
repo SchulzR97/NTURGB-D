@@ -107,7 +107,7 @@ def __get_depth_masked_sequences__(in_dir:str, data_cnt:int = None):
         pass
     return sequences
 
-def get_datasets_depth_masked_full(in_dir:str, split_prop = 0.7, data_cnt:int = None, shuffle = False):
+def get_datasets_depth_masked_full(in_dir:str, split_prop = 0.7, data_cnt:int = None, shuffle = False, sequence_length:int = 64):
     sequence_dirs = __get_depth_masked_sequences__(in_dir, data_cnt)
 
     if shuffle:
@@ -122,16 +122,52 @@ def get_datasets_depth_masked_full(in_dir:str, split_prop = 0.7, data_cnt:int = 
 
     sequence_dirs = np.asarray(sequence_dirs)
 
-    ds_train = depth_masked_dataset(in_dir, sequence_dirs[idx_train])
-    ds_val = depth_masked_dataset(in_dir, sequence_dirs[idx_val])
+    ds_train = depth_masked_dataset(in_dir, sequence_dirs[idx_train], sequence_length=sequence_length)
+    ds_val = depth_masked_dataset(in_dir, sequence_dirs[idx_val], sequence_length=sequence_length)
 
     return ds_train, ds_val
 
-def get_datasets_depth_masked_CV(in_dir:str):
-    pass
+def get_datasets_depth_masked_CV(in_dir:str, sequence_length:int = 64):
+    sequence_dirs = __get_depth_masked_sequences__(in_dir)
 
-def get_datasets_depth_masked_CS(in_dir:str):
-    pass
+    dirs_train = []
+    dirs_val = []
+
+    for dir in sequence_dirs:
+        dir_name = dir.split('/')[-1]
+        camera = int(dir_name[5:8])
+        if camera in CV_CAMERA_IDS_TRAIN:
+            dirs_train.append(dir)
+        elif camera in CV_CAMERA_IDS_VAL:
+            dirs_val.append(dir)
+        else:
+            raise Exception(f'Camera ID {camera} not defined for split CV.')
+    
+    ds_train = depth_masked_dataset(in_dir, dirs_train, sequence_length=sequence_length)
+    ds_val = depth_masked_dataset(in_dir, dirs_val, sequence_length=sequence_length)
+
+    return ds_train, ds_val
+
+def get_datasets_depth_masked_CS(in_dir:str, sequence_length:int = 64):
+    sequence_dirs = __get_depth_masked_sequences__(in_dir)
+
+    dirs_train = []
+    dirs_val = []
+
+    for dir in sequence_dirs:
+        dir_name = dir.split('/')[-1]
+        subject = int(dir_name[1:4])
+        if subject in CS_SUBJECT_IDS_TRAIN:
+            dirs_train.append(dir)
+        elif subject in CS_SUBJECT_IDS_VAL:
+            dirs_val.append(dir)
+        else:
+            raise Exception(f'Subject ID {subject} not defined for split CV.')
+    
+    ds_train = depth_masked_dataset(in_dir, dirs_train, sequence_length=sequence_length)
+    ds_val = depth_masked_dataset(in_dir, dirs_val, sequence_length=sequence_length)
+
+    return ds_train, ds_val
 #endregion
 
 #region Datasets
@@ -233,8 +269,8 @@ class skeletons_dataset(base_dataset):
         return i, torch.tensor(joints)
 
 class depth_masked_dataset(base_dataset):
-    def __init__(self, in_dir, files:list, num_classes:int = 64, sequence_length:int = 64):
-        super().__init__(in_dir, files, num_classes, sequence_length)
+    def __init__(self, in_dir, action_dirs:list, num_classes:int = 64, sequence_length:int = 64):
+        super().__init__(in_dir, action_dirs, num_classes, sequence_length)
 
     def __getitem__(self, index):
         sequence_dir = self.__files__[index]
@@ -246,6 +282,8 @@ class depth_masked_dataset(base_dataset):
         img_sequence = []
         for entry in sorted(files):
             file = str(entry).replace('b\'', '').replace('\'', '')
+            if file.startswith('.'):
+                continue
             img = cv.imread(f'{sequence_dir}/{file}')[:, :, 0] / 19
             #img[img == 0] = 1
             #img = 1 - img

@@ -5,7 +5,7 @@
     "version": "0.2.0",
     "configurations": [
         {
-            "name": "skeletons full",
+            "name": "load skeletons full",
             "type": "debugpy",
             "request": "launch",
             "program": "demo.py",
@@ -18,7 +18,7 @@
             ]
         },
         {
-            "name": "skeletons CV",
+            "name": "load skeletons CV",
             "type": "debugpy",
             "request": "launch",
             "program": "demo.py",
@@ -31,7 +31,7 @@
             ]
         },
         {
-            "name": "skeletons CS",
+            "name": "load skeletons CS",
             "type": "debugpy",
             "request": "launch",
             "program": "demo.py",
@@ -44,7 +44,7 @@
             ]
         },
         {
-            "name": "depth masked full",
+            "name": "load depth masked full",
             "type": "debugpy",
             "request": "launch",
             "program": "demo.py",
@@ -57,7 +57,7 @@
             ]
         },
         {
-            "name": "depth masked CV",
+            "name": "load depth masked CV",
             "type": "debugpy",
             "request": "launch",
             "program": "demo.py",
@@ -70,7 +70,7 @@
             ]
         },
         {
-            "name": "depth masked CS",
+            "name": "load depth masked CS",
             "type": "debugpy",
             "request": "launch",
             "program": "demo.py",
@@ -80,6 +80,25 @@
                 "--split", "CS",
                 "--dataset", "depth_masked",
                 "--num_workers", "2"
+            ]
+        },
+        {
+            "name": "train demo",
+            "type": "debugpy",
+            "request": "launch",
+            "program": "demo_train.py",
+            "console": "integratedTerminal",
+            "args": [
+                "--in_dir", "/Users/schulzr/Downloads/nturgb+d_depth_masked",
+                "--split", "CS",
+                "--batch_size", "8",
+                "--num_epochs", "500000",
+                "--num_workers", "2",
+                "--samples_per_epoch", "20",
+                "--learning_rate", "5e-4",
+                "--device", "mps",
+                "--mavg_epochs", "200",
+                "--load_run", "2024-06-07-12-21-49"
             ]
         }
     ]
