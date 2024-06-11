@@ -5,12 +5,142 @@ import os
 from numpy.random import default_rng
 from tqdm import tqdm
 import cv2 as cv
+import json
 
 CS_SUBJECT_IDS_TRAIN = [1,  2,  4,  5,  8,  9,  13, 14, 15, 16, 17, 18, 19, 25, 27, 28, 31, 34, 35, 38]
 CS_SUBJECT_IDS_VAL = [3,  6,  7,  10, 11, 12, 20, 21, 22, 23, 24, 26, 29, 30, 32, 33, 36, 37, 39, 40]
 
 CV_CAMERA_IDS_TRAIN = [2, 3]
 CV_CAMERA_IDS_VAL = [1]
+
+ACTION_LABELS = [
+    #'A0: undefined',
+    'A1: drink water',
+	'A2: eat meal',
+    'A3: brush teeth',
+    'A4: brush hair',
+    'A5: drop',
+    'A6: pick up',
+    'A7: throw',
+    'A8: sit down',
+    'A9: stand up',
+    'A10: clapping',
+    'A11: reading',
+    'A12: writing',
+    'A13: tear up paper',
+    'A14: put on jacket',
+    'A15: take off jacket',
+    'A16: put on a shoe',
+    'A17: take off a shoe',
+    'A18: put on glasses',
+    'A19: take off glasses',
+    'A20: put on a hat/cap',
+    'A21: take off a hat/cap',
+    'A22: cheer up',
+    'A23: hand waving',
+    'A24: kicking something',
+    'A25: reach into pocket',
+    'A26: hopping',
+    'A27: jump up',
+    'A28: phone call',
+    'A29: play with phone/tablet',
+    'A30: type on a keyboard',
+    'A31: point to something',
+    'A32: taking a selfie',
+    'A33: check time (from watch)',
+    'A34: rub two hands',
+    'A35: nod head/bow',
+    'A36: shake head',
+    'A37: wipe face',
+    'A38: salute',
+    'A39: put palms together',
+    'A40: cross hands in front',
+
+    'A41: sneeze/cough',
+    'A42: staggering',
+    'A43: falling down',
+    'A44: headache',
+    'A45: chest pain',
+    'A46: back pain',
+    'A47: neck pain',
+    'A48: nausea/vomiting',
+    'A49: fan self',
+
+    'A50: punch/slap',
+    'A51: kicking',
+    'A52: pushing',
+    'A53: pat on back',
+    'A54: point finger',
+    'A55: hugging',
+    'A56: giving object',
+    'A57: touch pocket',
+    'A58: shaking hands',
+    'A59: walking towards',
+    'A60: walking apart',
+
+    'A61: put on headphone',
+    'A62: take off headphone',
+    'A63: shoot at basket',
+    'A64: bounce ball',
+    'A65: tennis bat swing',
+    'A66: juggle table tennis ball',
+    'A67: hush',
+    'A68: flick hair',
+    'A69: thumb up',
+    'A70: thumb down',
+    'A71: make OK sign',
+    'A72: make victory sign',
+    'A73: staple book',
+    'A74: counting money',
+    'A75: cutting nails',
+    'A76: cutting paper',
+    'A77: snap fingers',
+    'A78: open bottle',
+    'A79: sniff/smell',
+    'A80: squat down',
+    'A81: toss a coin',
+	'A82: fold paper',
+    'A83: ball up paper',
+    'A84: play magic cube'
+    'A85: apply cream on face',
+    'A86: apply cream on hand',
+    'A87: put on bag',
+    'A88: take off bag',
+    'A89: put object into bag',
+    'A90: take object out of bag',
+    'A91: open a box',
+    'A92: move heavy objects',
+    'A93: shake fist',
+    'A94: throw up cap/hat',
+    'A95: capitulate',
+    'A96: cross arms',
+    'A97: arm circles',
+    'A98: arm swings',
+    'A99: run on the spot',
+    'A100: butt kicks',
+    'A101: cross toe touch',
+    'A102: side kick',
+
+    'A103: yawn',
+    'A104: stretch oneself',
+    'A105: blow nose',
+
+    'A106: hit with object',
+    'A107: wield knife',
+    'A108: knock over',
+    'A109: grab stuff',
+    'A110: shoot with gun',
+    'A111: step on foot',
+    'A112: high-five',
+    'A113: cheers and drink',
+    'A114: carry object',
+    'A115: take a photo',
+    'A116: follow',
+    'A117: whisper',
+    'A118: exchange things',
+    'A119: support somebody',
+    'A120: rock-paper-scissors'
+]
 
 #region "NTU RGB+D" - 3D Skeletons
 def __get_skeleton_files__(in_dir:str, data_cnt:int = None):
@@ -34,7 +164,7 @@ def __get_skeleton_files__(in_dir:str, data_cnt:int = None):
 
     return files
 
-def get_datasets_skeletons_full(in_dir:str, split_prop = 0.7, data_cnt:int = None, shuffle = False):
+def get_datasets_skeletons_full(in_dir:str, num_classes:int, split_prop = 0.7, data_cnt:int = None, shuffle = False):
     files = __get_skeleton_files__(in_dir, data_cnt)
 
     if shuffle:
@@ -49,12 +179,12 @@ def get_datasets_skeletons_full(in_dir:str, split_prop = 0.7, data_cnt:int = Non
 
     files = np.asarray(files)
 
-    ds_train = skeletons_dataset(in_dir, files[idx_train])
-    ds_val = skeletons_dataset(in_dir, files[idx_val])
+    ds_train = skeletons_dataset(in_dir, files[idx_train], num_classes)
+    ds_val = skeletons_dataset(in_dir, files[idx_val], num_classes)
 
     return ds_train, ds_val
 
-def get_datasets_skeletons_CV(in_dir:str):
+def get_datasets_skeletons_CV(in_dir:str, num_classes:int):
     files = __get_skeleton_files__(in_dir, None)
 
     files_train = []
@@ -70,12 +200,12 @@ def get_datasets_skeletons_CV(in_dir:str):
         else:
             raise Exception(f'Camera ID {camera} not defined for split CV.')
 
-    ds_train = skeletons_dataset(in_dir, files_train)
-    ds_val = skeletons_dataset(in_dir, files_val)
+    ds_train = skeletons_dataset(in_dir, files_train, num_classes)
+    ds_val = skeletons_dataset(in_dir, files_val, num_classes)
     
     return ds_train, ds_val
 
-def get_datasets_skeletons_CS(in_dir:str):
+def get_datasets_skeletons_CS(in_dir:str, num_classes:int):
     files = __get_skeleton_files__(in_dir, None)
 
     files_train = []
@@ -91,8 +221,8 @@ def get_datasets_skeletons_CS(in_dir:str):
         else:
             raise Exception(f'Subject ID {subject} not defined for split CV.')
 
-    ds_train = skeletons_dataset(in_dir, files_train)
-    ds_val = skeletons_dataset(in_dir, files_val)
+    ds_train = skeletons_dataset(in_dir, files_train, num_classes)
+    ds_val = skeletons_dataset(in_dir, files_val, num_classes)
     
     return ds_train, ds_val
 #endregion
@@ -107,7 +237,7 @@ def __get_depth_masked_sequences__(in_dir:str, data_cnt:int = None):
         pass
     return sequences
 
-def get_datasets_depth_masked_full(in_dir:str, split_prop = 0.7, data_cnt:int = None, shuffle = False, sequence_length:int = 64):
+def get_datasets_depth_masked_full(in_dir:str, num_classes:int, split_prop = 0.7, data_cnt:int = None, shuffle = False, sequence_length:int = 64):
     sequence_dirs = __get_depth_masked_sequences__(in_dir, data_cnt)
 
     if shuffle:
@@ -122,12 +252,12 @@ def get_datasets_depth_masked_full(in_dir:str, split_prop = 0.7, data_cnt:int = 
 
     sequence_dirs = np.asarray(sequence_dirs)
 
-    ds_train = depth_masked_dataset(in_dir, sequence_dirs[idx_train], sequence_length=sequence_length)
-    ds_val = depth_masked_dataset(in_dir, sequence_dirs[idx_val], sequence_length=sequence_length)
+    ds_train = depth_masked_dataset(in_dir, sequence_dirs[idx_train], num_classes, sequence_length=sequence_length)
+    ds_val = depth_masked_dataset(in_dir, sequence_dirs[idx_val], num_classes, sequence_length=sequence_length)
 
     return ds_train, ds_val
 
-def get_datasets_depth_masked_CV(in_dir:str, sequence_length:int = 64):
+def get_datasets_depth_masked_CV(in_dir:str, num_classes:int, sequence_length:int = 64):
     sequence_dirs = __get_depth_masked_sequences__(in_dir)
 
     dirs_train = []
@@ -143,12 +273,12 @@ def get_datasets_depth_masked_CV(in_dir:str, sequence_length:int = 64):
         else:
             raise Exception(f'Camera ID {camera} not defined for split CV.')
     
-    ds_train = depth_masked_dataset(in_dir, dirs_train, sequence_length=sequence_length)
-    ds_val = depth_masked_dataset(in_dir, dirs_val, sequence_length=sequence_length)
+    ds_train = depth_masked_dataset(in_dir, dirs_train, num_classes, sequence_length=sequence_length)
+    ds_val = depth_masked_dataset(in_dir, dirs_val, num_classes, sequence_length=sequence_length)
 
     return ds_train, ds_val
 
-def get_datasets_depth_masked_CS(in_dir:str, sequence_length:int = 64):
+def get_datasets_depth_masked_CS(in_dir:str, num_classes:int, sequence_length:int = 64):
     sequence_dirs = __get_depth_masked_sequences__(in_dir)
 
     dirs_train = []
@@ -164,8 +294,8 @@ def get_datasets_depth_masked_CS(in_dir:str, sequence_length:int = 64):
         else:
             raise Exception(f'Subject ID {subject} not defined for split CV.')
     
-    ds_train = depth_masked_dataset(in_dir, dirs_train, sequence_length=sequence_length)
-    ds_val = depth_masked_dataset(in_dir, dirs_val, sequence_length=sequence_length)
+    ds_train = depth_masked_dataset(in_dir, dirs_train, num_classes, sequence_length=sequence_length)
+    ds_val = depth_masked_dataset(in_dir, dirs_val, num_classes, sequence_length=sequence_length)
 
     return ds_train, ds_val
 #endregion
@@ -269,14 +399,14 @@ class skeletons_dataset(base_dataset):
         return i, torch.tensor(joints)
 
 class depth_masked_dataset(base_dataset):
-    def __init__(self, in_dir, action_dirs:list, num_classes:int = 64, sequence_length:int = 64):
+    def __init__(self, in_dir, action_dirs:list, num_classes:int = 60, sequence_length:int = 64):
         super().__init__(in_dir, action_dirs, num_classes, sequence_length)
 
     def __getitem__(self, index):
         sequence_dir = self.__files__[index]
 
         sequence_name = sequence_dir.split('/')[-1]
-        action = int(sequence_name[-3:])-1
+        action_idx = int(sequence_name[-3:]) - 1
 
         files = os.listdir(sequence_dir)
         img_sequence = []
@@ -303,7 +433,7 @@ class depth_masked_dataset(base_dataset):
 
         #X = X.permute(0, 3, 1, 2)
         T = torch.zeros((self.__num_classes__))
-        T[action] = 1
+        T[action_idx] = 1
 
         return X, T
 #endregion

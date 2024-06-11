@@ -25,14 +25,14 @@ class ActionPredictionModel(nn.Module):
     def __init__(self, args):
         super().__init__()
 
-        self.conv1 = ConvBlock(in_channels=args.sequence_length, out_channels=64, kernel_size=7, stride=4)
-        self.conv2 = ConvBlock(in_channels=64, out_channels=128, kernel_size=7, stride=4)
-        self.conv3 = ConvBlock(in_channels=128, out_channels=256, kernel_size=5, stride=3)
+        self.conv1 = ConvBlock(in_channels=args.sequence_length, out_channels=64, kernel_size=7, stride=5)
+        self.conv2 = ConvBlock(in_channels=64, out_channels=128, kernel_size=5, stride=3)
+        self.conv3 = ConvBlock(in_channels=128, out_channels=256, kernel_size=3, stride=2)
         self.conv4 = ConvBlock(in_channels=256, out_channels=512, kernel_size=3, stride=2)
 
         self.flatten = nn.Flatten()
 
-        self.readout = nn.Linear(1024, args.num_classes)
+        self.readout = nn.Linear(10240, args.num_classes)
 
         self.softmax = nn.Softmax(dim=1)
 

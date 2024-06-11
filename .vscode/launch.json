@@ -91,14 +91,35 @@
             "args": [
                 "--in_dir", "/Users/schulzr/Downloads/nturgb+d_depth_masked",
                 "--split", "CS",
-                "--batch_size", "8",
+                "--batch_size", "16",
                 "--num_epochs", "500000",
-                "--num_workers", "2",
+                "--num_workers", "0",
+                "--samples_per_epoch", "10",
+                "--learning_rate", "1e-4",
+                "--device", "mps",
+                "--mavg_epochs", "100",
+                "--mode", "train",
+                "--load_run", "2024-06-10-13-47-51"
+            ]
+        },
+        {
+            "name": "test demo",
+            "type": "debugpy",
+            "request": "launch",
+            "program": "demo_train.py",
+            "console": "integratedTerminal",
+            "args": [
+                "--in_dir", "/Users/schulzr/Downloads/nturgb+d_depth_masked",
+                "--split", "full",
+                "--batch_size", "16",
+                "--num_epochs", "500000",
+                "--num_workers", "0",
                 "--samples_per_epoch", "20",
                 "--learning_rate", "5e-4",
                 "--device", "mps",
                 "--mavg_epochs", "200",
-                "--load_run", "2024-06-07-12-21-49"
+                "--mode", "test",
+                "--load_run", "2024-06-10-13-47-51"
             ]
         }
     ]
